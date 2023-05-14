@@ -1,23 +1,16 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:job_hunt_app/models/job_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class JobTile extends StatelessWidget {
   const JobTile({
     super.key,
-    required this.imageUrl,
-    required this.publisher,
-    required this.title,
-    required this.company,
-    required this.url,
+    required this.job,
   });
 
-  final String title;
-  final String imageUrl;
-  final String publisher;
-  final String company;
-  final String url;
+  final JobModel job;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +26,7 @@ class JobTile extends StatelessWidget {
               CircleAvatar(
                 backgroundColor: Colors.white,
                 radius: 35,
-                child: Image.network(imageUrl, width: 60, height: 60),
+                child: Image.network(job.imageUrl, width: 60, height: 60),
               ),
               const SizedBox(width: 10),
               Column(
@@ -43,7 +36,7 @@ class JobTile extends StatelessWidget {
                   SizedBox(
                     width: MediaQuery.of(context).size.width * 0.7,
                     child: Text(
-                      title,
+                      job.title,
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -66,7 +59,7 @@ class JobTile extends StatelessWidget {
                                 ),
                                 children: [
                                   TextSpan(
-                                    text: company,
+                                    text: job.company,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.black,
@@ -88,7 +81,7 @@ class JobTile extends StatelessWidget {
                                 text: 'Posted on : ',
                                 children: [
                                   TextSpan(
-                                    text: publisher,
+                                    text: job.publisher,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.black,
@@ -114,7 +107,7 @@ class JobTile extends StatelessWidget {
                                 const EdgeInsets.all(8)),
                             minimumSize:
                                 MaterialStateProperty.all(const Size(0, 30))),
-                        onPressed: () => launchUrl(Uri.parse(url)),
+                        onPressed: () => launchUrl(Uri.parse(job.url)),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [

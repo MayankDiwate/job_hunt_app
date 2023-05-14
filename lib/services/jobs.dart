@@ -1,64 +1,62 @@
 import 'package:dio/dio.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:job_hunt_app/constants.dart';
 // import 'package:job_hunt_app/constants.dart';
 import 'package:job_hunt_app/models/job_model.dart';
 
-class Jobs {
-  void main() async {
-    const String apiUrl = 'https://jsearch.p.rapidapi.com/search';
-    const String apiKey = '1980b48c9fmshad18de077371fc5p11c066jsna61900f446f0';
+final dioProvider = Provider(
+  (ref) => Dio(
+    BaseOptions(
+      baseUrl: "https://jsearch.p.rapidapi.com",
+      headers: {
+        'X-RapidAPI-Key': apiKey,
+        'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
+      },
+    ),
+  ),
+);
 
-    final dio = Dio();
-    dio.options.headers['x-rapidapi-key'] = apiKey;
+final jobsControllerProvider = Provider((ref) {
+  final dio = ref.watch(dioProvider);
+  return JobsController(dio);
+});
 
-    final List<JobModel> jobs = [];
+final queryProvider = StateProvider((ref) => "Flutter Developer");
 
-    try {
-      final response = await dio.get(apiUrl);
-      final List<dynamic> jobList = response.data['jobs'];
-      for (final jobData in jobList) {
-        final job = JobModel.fromJson(jobData);
-        jobs.add(job);
-      }
-    } catch (e) {
-      print('Error: $e');
-    }
-  }
+final jobsProvider = FutureProvider((ref) {
+  final query = ref.watch(queryProvider);
+  final jobsController = ref.watch(jobsControllerProvider);
+  return jobsController.getJobs(query: query);
+});
 
-  List<JobModel> jobs = [];
+class JobsController {
+  JobsController(this._dio);
 
-  Future<void> getJobs({String? query}) async {
-    String url = 'https://jsearch.p.rapidapi.com/search';
+  final Dio _dio;
 
-    Response response = await Dio().get(url,
-        queryParameters: {
-          "content-type": "application/json",
-          "query": query,
-          "page": 1,
-          "num_pages": 1
-        },
-        options: Options(headers: {
-          'X-RapidAPI-Key': API_KEY,
-          'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
-        }));
-
-    print(response.data);
+  Future<List<JobModel>> getJobs({String? query}) async {
+    Response response = await _dio.get(
+      "/search",
+      queryParameters: {
+        "content-type": "application/json",
+        "query": query,
+        "page": 1,
+        "num_pages": 1
+      },
+    );
 
     if (response.data["status"] == "OK") {
-      response.data["data"].forEach(
-        (job) {
-          if (job['job_apply_link'] != "" && job["employer_logo"] != null) {
-            JobModel jobModel = JobModel(
-              title: job["job_title"],
-              company: job["employer_name"],
-              url: job["job_apply_link"],
-              imageUrl: job["employer_logo"],
-              publisher: job["job_publisher"],
-            );
-            jobs.add(jobModel);
-          }
-        },
-      );
+      return (response.data["data"] as List)
+          .where((e) => e['job_apply_link'] != "" && e["employer_logo"] != null)
+          .map((e) => JobModel(
+                title: e["job_title"],
+                company: e["employer_name"],
+                url: e["job_apply_link"],
+                imageUrl: e["employer_logo"],
+                publisher: e["job_publisher"],
+              ))
+          .toList();
     }
+    return [];
   }
 }

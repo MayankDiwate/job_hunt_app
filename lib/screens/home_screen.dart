@@ -1,36 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:job_hunt_app/services/jobs.dart';
 import 'package:job_hunt_app/widgets/job_tile.dart';
 import 'package:job_hunt_app/widgets/search_widget.dart';
 
-class JobScreen extends StatefulWidget {
+class JobScreen extends HookConsumerWidget {
   const JobScreen({super.key});
 
   @override
-  State<JobScreen> createState() => _JobScreenState();
-}
-
-class _JobScreenState extends State<JobScreen> {
-  Jobs jobsObj = Jobs();
-  bool isLoading = true;
-  late TextEditingController searchController = TextEditingController();
-  final String query = "Flutter Developer";
-
-  @override
-  void initState() {
-    super.initState();
-    getData();
-  }
-
-  Future<void> getData() async {
-    await jobsObj.getJobs(query: query);
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jobsValue = ref.watch(jobsProvider);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -53,36 +32,38 @@ class _JobScreenState extends State<JobScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: () =>
-                showSearch(context: context, delegate: MySearchDelegate()),
+            onPressed: () async {
+              final res = await showSearch(
+                    context: context,
+                    delegate: MySearchDelegate(),
+                  ) ??
+                  "";
+              if (res.isNotEmpty) {
+                ref.read(queryProvider.notifier).state = res;
+              }
+            },
             icon: const Icon(Icons.search, size: 30),
           ),
         ],
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                jobsObj.jobs.isEmpty
-                    ? const Center(child: Text("No Data is fetched !!"))
-                    : Expanded(
-                        child: ListView.builder(
-                          itemCount: jobsObj.jobs.length,
-                          itemBuilder: (_, i) {
-                            return JobTile(
-                              title: jobsObj.jobs[i].title,
-                              publisher: jobsObj.jobs[i].publisher,
-                              imageUrl: jobsObj.jobs[i].imageUrl,
-                              // "https://d1yjjnpx0p53s8.cloudfront.net/1024px-no_image_available.svg_.png?bjDpkOybMMbgorBhoXnaTzEMDa4.q5m7",
-                              company: jobsObj.jobs[i].company,
-                              url: jobsObj.jobs[i].url,
-                            );
-                          },
-                        ),
-                      ),
-              ],
-            ),
+      body: jobsValue.when(
+        data: (jobs) =>
+            Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          jobs.isEmpty
+              ? const Center(child: Text("No Data is fetched !!"))
+              : Expanded(
+                  child: ListView.builder(
+                    itemCount: jobs.length,
+                    itemBuilder: (_, i) {
+                      final job = jobs[i];
+                      return JobTile(job: job);
+                    },
+                  ),
+                ),
+        ]),
+        error: (e, st) => Center(child: Text(e.toString())),
+        loading: () => const Center(child: CircularProgressIndicator()),
+      ),
     );
   }
 }
