@@ -93,7 +93,6 @@ class JobTile extends StatelessWidget {
                           ),
                         ],
                       ),
-                      // const Spacer(),
                       ElevatedButton(
                         style: ButtonStyle(
                             backgroundColor:
@@ -107,7 +106,8 @@ class JobTile extends StatelessWidget {
                                 const EdgeInsets.all(8)),
                             minimumSize:
                                 MaterialStateProperty.all(const Size(0, 30))),
-                        onPressed: () => launchUrl(Uri.parse(job.url)),
+                        onPressed: () => launchUrl(Uri.parse(job.url),
+                            mode: LaunchMode.externalApplication),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [

@@ -4,6 +4,8 @@ import 'package:job_hunt_app/services/jobs.dart';
 import 'package:job_hunt_app/widgets/job_tile.dart';
 import 'package:job_hunt_app/widgets/search_widget.dart';
 
+final alertProvider = StateProvider((ref) => false);
+
 class JobScreen extends HookConsumerWidget {
   const JobScreen({super.key});
 
@@ -47,20 +49,22 @@ class JobScreen extends HookConsumerWidget {
         ],
       ),
       body: jobsValue.when(
-        data: (jobs) =>
-            Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          jobs.isEmpty
-              ? const Center(child: Text("No Data is fetched !!"))
-              : Expanded(
-                  child: ListView.builder(
-                    itemCount: jobs.length,
-                    itemBuilder: (_, i) {
-                      final job = jobs[i];
-                      return JobTile(job: job);
-                    },
+        data: (jobs) => Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            jobs.isEmpty
+                ? const Center(child: Text("No Data is fetched !!"))
+                : Expanded(
+                    child: ListView.builder(
+                      itemCount: jobs.length,
+                      itemBuilder: (_, i) {
+                        final job = jobs[i];
+                        return JobTile(job: job);
+                      },
+                    ),
                   ),
-                ),
-        ]),
+          ],
+        ),
         error: (e, st) => Center(child: Text(e.toString())),
         loading: () => const Center(child: CircularProgressIndicator()),
       ),
